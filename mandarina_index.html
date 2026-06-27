@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>🍊 Ventanas de Cosecha — Mandarinas Pisco Elqui</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#e6edf3;font-family:'Segoe UI',sans-serif;padding:0}
+.topbar{background:#161b22;padding:8px 20px;border-bottom:1px solid #30363d;display:flex;justify-content:space-between;align-items:center}
+.topbar span{color:#8b949e;font-size:.8rem}
+.topbar a{background:#238636;color:white;padding:5px 14px;border-radius:6px;text-decoration:none;font-size:.8rem;font-weight:600}
+.main{padding:20px}
+h1{font-size:1.5rem;color:#3fb950;text-align:center;margin-bottom:4px}
+.subtitle{text-align:center;color:#8b949e;font-size:.82rem;margin-bottom:18px}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.kpi{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:14px;text-align:center}
+.kpi-val{font-size:1.9rem;font-weight:700}
+.kpi-lbl{font-size:.72rem;color:#8b949e;margin-top:3px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px}
+.card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:14px}
+.card h3{font-size:.78rem;color:#8b949e;margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em}
+canvas{max-height:210px}
+.alert{background:#1a3a2a;border:1px solid #3fb950;border-radius:8px;padding:12px;margin-bottom:14px;font-size:.85rem;color:#3fb950}
+footer{text-align:center;color:#8b949e;font-size:.7rem;margin-top:16px;padding-bottom:10px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span>🍊 Ventanas de Cosecha Mandarinas · Pisco Elqui · 2022–2024</span>
+  <a href="https://github.com/franciscoantonioardiles-ctrl" target="_blank">⬅ Ver en GitHub</a>
+</div>
+<div class="main">
+<h1>🍊 Predicción de Ventanas de Cosecha · Mandarinas</h1>
+<p class="subtitle">Valle del Elqui · Pisco Elqui · ML + Deep Learning · F. Ardiles para M. Valenzuela</p>
+
+<div class="alert">
+  ✅ <strong>Ventana óptima activa</strong> cuando: Temperatura 15–25°C · Humedad Relativa >60% · Viento &lt;2.78 m/s · Radiación Solar &lt;50 W/m²
+</div>
+
+<div class="kpi-row">
+  <div class="kpi"><div class="kpi-val" style="color:#3fb950">100%</div><div class="kpi-lbl">Accuracy Random Forest</div></div>
+  <div class="kpi"><div class="kpi-val" style="color:#58a6ff">99.65%</div><div class="kpi-lbl">Accuracy Deep Learning</div></div>
+  <div class="kpi"><div class="kpi-val" style="color:#d29922">12.6%</div><div class="kpi-lbl">Horas con Ventana Óptima</div></div>
+  <div class="kpi"><div class="kpi-val" style="color:#f85149">00–07h</div><div class="kpi-lbl">Franja Horaria Recomendada</div></div>
+</div>
+
+<div class="grid2">
+  <div class="card"><h3>% Horas con Ventana por Hora del Día</h3><canvas id="cHora"></canvas></div>
+  <div class="card"><h3>% Horas con Ventana por Mes</h3><canvas id="cMes"></canvas></div>
+</div>
+
+<div class="grid2">
+  <div class="card"><h3>Accuracy por Época — Red Neuronal</h3><canvas id="cAcc"></canvas></div>
+  <div class="card"><h3>Loss por Época — Red Neuronal</h3><canvas id="cLoss"></canvas></div>
+</div>
+
+<div class="grid2">
+  <div class="card"><h3>Feature Importance — Random Forest</h3><canvas id="cFI"></canvas></div>
+  <div class="card"><h3>Comparación RF vs DL · Métricas Clave</h3><canvas id="cModels"></canvas></div>
+</div>
+
+</div>
+
+<script>
+const G={color:'rgba(255,255,255,0.06)'};
+const T={color:'#8b949e',font:{size:10}};
+const C=id=>document.getElementById(id).getContext('2d');
+
+// Ventanas por hora
+new Chart(C('cHora'),{
+  type:'bar',
+  data:{labels:[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
+    datasets:[{data:[45, 52, 58, 61, 63, 55, 40, 18, 8, 4, 2, 1, 1, 1, 2, 3, 5, 10, 18, 28, 36, 42, 45, 47],
+      backgroundColor:context=>context.raw>30?'rgba(63,185,80,0.8)':context.raw>10?'rgba(210,153,34,0.8)':'rgba(248,81,73,0.8)',
+      borderRadius:3,borderWidth:0}]},
+  options:{plugins:{legend:{display:false}},
+    scales:{x:{ticks:T,grid:G},y:{ticks:T,grid:G,title:{display:true,text:'%',color:'#8b949e'}}}}
+});
+
+// Ventanas por mes
+new Chart(C('cMes'),{
+  type:'bar',
+  data:{labels:["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"],
+    datasets:[{data:[8, 10, 14, 18, 22, 24, 20, 16, 12, 9, 7, 6],backgroundColor:'rgba(88,166,255,0.75)',borderRadius:4,borderWidth:0}]},
+  options:{plugins:{legend:{display:false}},
+    scales:{x:{ticks:T,grid:G},y:{ticks:T,grid:G}}}
+});
+
+// Accuracy
+new Chart(C('cAcc'),{
+  type:'line',
+  data:{labels:[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+    datasets:[
+      {label:'Train',data:[93.46, 97.01, 98.23, 98.58, 98.79, 99.0, 99.27, 99.41, 99.43, 99.42, 99.5, 99.48, 99.38, 99.41, 99.54, 99.62, 99.52, 99.65, 99.65, 99.68],borderColor:'#58a6ff',backgroundColor:'rgba(88,166,255,0.1)',tension:.3,pointRadius:3},
+      {label:'Validación',data:[96.8, 98.29, 98.29, 98.69, 99.04, 99.04, 99.34, 99.52, 99.08, 99.52, 99.39, 99.52, 99.56, 99.56, 99.52, 99.61, 99.61, 99.61, 99.65, 99.61],borderColor:'#3fb950',backgroundColor:'rgba(63,185,80,0.1)',tension:.3,pointRadius:3}
+    ]},
+  options:{plugins:{legend:{labels:{color:'#ccc',font:{size:10}}}},
+    scales:{x:{ticks:T,grid:G},y:{ticks:T,grid:G,min:90,max:101}}}
+});
+
+// Loss
+new Chart(C('cLoss'),{
+  type:'line',
+  data:{labels:[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+    datasets:[
+      {label:'Train Loss',data:[0.2845, 0.0693, 0.0466, 0.0387, 0.0315, 0.026, 0.0202, 0.0176, 0.0164, 0.0155, 0.0144, 0.0127, 0.0147, 0.0141, 0.0124, 0.0105, 0.011, 0.0102, 0.0097, 0.0099],borderColor:'#d29922',tension:.3,pointRadius:3},
+      {label:'Val Loss',  data:[0.0763, 0.0503, 0.0408, 0.0326, 0.0251, 0.0228, 0.0198, 0.0183, 0.0198, 0.0163, 0.0156, 0.0151, 0.0141, 0.0134, 0.014, 0.0127, 0.0118, 0.012, 0.0121, 0.0113],  borderColor:'#f85149',tension:.3,pointRadius:3}
+    ]},
+  options:{plugins:{legend:{labels:{color:'#ccc',font:{size:10}}}},
+    scales:{x:{ticks:T,grid:G},y:{ticks:T,grid:G}}}
+});
+
+// Feature Importance
+new Chart(C('cFI'),{
+  type:'bar',
+  data:{labels:["PuntoRocio_C", "Mes", "HR_%", "Viento_m_s", "HoraInt", "Temp_C", "Radiacion_W_m2"],
+    datasets:[{data:[0.042, 0.055, 0.072, 0.098, 0.142, 0.198, 0.393],
+      backgroundColor:['#58a6ff','#58a6ff','#58a6ff','#d29922','#d29922','#3fb950','#f85149'],
+      borderRadius:3,borderWidth:0}]},
+  options:{indexAxis:'y',plugins:{legend:{display:false}},
+    scales:{x:{ticks:T,grid:G},y:{ticks:{color:'#ccc',font:{size:9}},grid:{display:false}}}}
+});
+
+// Comparación modelos
+new Chart(C('cModels'),{
+  type:'bar',
+  data:{
+    labels:['Accuracy','Precision','Recall','F1-Score'],
+    datasets:[
+      {label:'Random Forest',data:[100,100,99,99.5],backgroundColor:'rgba(63,185,80,0.8)',borderRadius:4},
+      {label:'Deep Learning',data:[99.65,90,96,93],  backgroundColor:'rgba(88,166,255,0.8)',borderRadius:4}
+    ]},
+  options:{plugins:{legend:{labels:{color:'#ccc',font:{size:10}}}},
+    scales:{x:{ticks:T,grid:G},y:{ticks:T,grid:G,min:85,max:101}}}
+});
+</script>
+
+<footer>🍊 Ventanas de Cosecha · Pisco Elqui 2022–2024 · Python: scikit-learn · TensorFlow · Francisco Ardiles M.</footer>
+</body>
+</html>
